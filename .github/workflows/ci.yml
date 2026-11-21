@@ -38,6 +38,17 @@ jobs:
             loader/chain.bin /tmp/begonia-chain.img
           python3 tools/check-chain-image.py /tmp/begonia-chain.img 1088
 
+      - name: Build mtkloader (MT6785 / begonia)
+        run: mtkloader/build-begonia.sh
+
+      - name: Synthetic XNU payload chain (XNUP + res3)
+        run: |
+          head -c 4096 /dev/zero > /tmp/fake-kernel
+          head -c 512 /dev/zero > /tmp/fake-ramdisk
+          tools/m2-chain.sh /tmp/linux-boot.img /tmp/fake-kernel \
+            /tmp/fake-ramdisk /tmp/begonia-m2.img
+          python3 tools/check-chain-image.py /tmp/begonia-m2.img 1088
+
       - name: Module source is present (built locally against 7.1.0)
         run: |
           test -f linux/hakios_ramoops.c

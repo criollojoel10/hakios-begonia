@@ -35,9 +35,10 @@ The request is the last 4 KiB (`0xdf000..0xdffff`).
 | Storage | system image `xnusys` read through **MSDC1** (microSD), GPT lookup; touch/TCM disabled (Novatek NT36672A, vendor firmware not in git) |
 | Request | mtkloader reads/clears `DARWIN-BEGONIA:BOOT-XNU` from the raw pmsg tail (`0xdf000`), the same path M1 proved; the ramoops-header path is kept |
 | Linux chain | `/tmp/begonia-m2-nopayload.img` **34,035,712 B**; Image 43,682,304; check OK |
-| XNU reference | `kernel` run **44924952512 success**: theos + `xnu-deps` stage 1/2 + XNU 8796.121.2; kernel linked (`mach.development.bcm2837`) |
+| XNU reference | `kernel` runs **44924952512** and **44926233119 success**: theos + `xnu-deps` stage 1/2 + XNU 8796.121.2; artifact `hakios-kernel` is the linked Mach-O (15,077,968 B) |
 | Payload tooling | `xnuloader/mkpayload.py` + `tools/m2-chain.sh` (Linux boot image + loader + optional `XNUP` kernel/ramdisk; 64 MiB guard) |
-| CI artifact | the first upload grabbed a symbols YAML; the workflow now selects the linked Mach-O and uploads only `hakios-kernel` (fix `5c…`) |
+| M2 chain | `/tmp/begonia-m2-hello.img` **39,639,040 B**: Linux Image 43,682,304; XNUP payload 15,094,560 (kernel 15,077,968 + hello 16,480 + cmdline); res3 43,944,448; check OK |
+| CI artifact | the first upload grabbed a symbols YAML; the fixed workflow selects the linked Mach-O and uploads only `hakios-kernel` (verified on run 44926233119) |
 
 ## Not done yet
 
