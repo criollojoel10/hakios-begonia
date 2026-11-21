@@ -77,7 +77,7 @@ Work:
   Darwin!`; the return to Linux; the log on `hackios-log`/ramoops.
 
 **Current state**: `mtkloader/mtkloader-begonia.bin` (44,984 B) builds from the
-common `mtk` sources with the begonia constants (fb `0x9b7d0000`, 1080x2340,
+common `mtk` sources with the begonia constants (fb `0x7d9b0000`, 1080x2340,
 `0xc0000000+0x94000000`, MSDC1, raw pmsg request); `tools/m2-chain.sh` packs
 the Linux boot image + loader + optional `XNUP` payload and checks the 64 MiB
 limit. The `kernel` workflow builds the reference XNU and now uploads

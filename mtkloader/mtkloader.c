@@ -406,25 +406,48 @@ static uint32_t marker_get(void)
 static uint64_t fb_base;
 static uint32_t fb_pitch;
 
-/* LK's layer as OVL0 scans it, if it is where LK said; LK's values otherwise. */
+/*
+ * LK's layer as the display engine scans it. MT6785 exposes several OVL/RDMA
+ * blocks (0x14008000 ovl0, 0x14009000/0x1400a000 ovl-2l, 0x1400b000/0x1400c000
+ * rdma); the one LK left the framebuffer on is the one whose layer 0 address
+ * falls inside the reserved framebuffer. Probe them instead of guessing.
+ */
+static uint64_t ovl_used;
 static void display_find(void)
 {
-	uint32_t addr = rd32(OVL0_BASE + OVL_L0_ADDR);
-	uint32_t pitch = rd32(OVL0_BASE + OVL_L0_PITCH) & 0xffff;
+	static const uint64_t cand[] = {
+		0x14008000ULL, 0x14009000ULL, 0x1400a000ULL, 0x1400b000ULL, 0x1400c000ULL,
+	};
 
 	fb_base = LK_FB_BASE;
 	fb_pitch = LK_FB_PITCH;
-	if (addr >= LK_FB_BASE && addr < LK_FB_BASE + LK_FB_SIZE && pitch >= PANEL_W * 4 && pitch <= 4096) {
-		fb_base = addr;
-		fb_pitch = pitch;
+	ovl_used = 0;
+	for (unsigned i = 0; i < sizeof(cand) / sizeof(cand[0]); i++) {
+		uint32_t addr = rd32(cand[i] + OVL_L0_ADDR);
+		uint32_t pitch = rd32(cand[i] + OVL_L0_PITCH) & 0xffff;
+
+		/* begonia: 1080 * 4 = 4320, wider than the MT6768's 2944. */
+		if (addr >= LK_FB_BASE && addr < LK_FB_BASE + LK_FB_SIZE &&
+		    pitch >= PANEL_W * 4 && pitch <= 8192) {
+			fb_base = addr;
+			fb_pitch = pitch;
+			ovl_used = cand[i];
+			break;
+		}
+	}
+	if (!ovl_used) {
+		out("OVL: no layer inside the framebuffer; left alone\n");
 	}
 }
 
 /* Opaque pixels only from here on: XNU's console writes alpha 0. */
 static void display_alpha_off(void)
 {
-	uint32_t con = rd32(OVL0_BASE + OVL_L0_CON);
-	wr32(OVL0_BASE + OVL_L0_CON, con & ~(1u << 8));
+	if (!ovl_used) {
+		return;
+	}
+	uint32_t con = rd32(ovl_used + OVL_L0_CON);
+	wr32(ovl_used + OVL_L0_CON, con & ~(1u << 8));
 	out("OVL0 L0_CON ");
 	out_hex(con);
 	out(" -> ");
@@ -436,14 +459,14 @@ static void display_alpha_off(void)
 	 * from a buffer of its own. Nothing of iOS writes to that buffer, so the words stayed on
 	 * top of the home screen. Leave the overlay's layers out of what the hardware composes.
 	 */
-	uint32_t src = rd32(OVL0_BASE + OVL_SRC_CON);
-	wr32(OVL0_BASE + OVL_SRC_CON, src & 1u);
+	uint32_t src = rd32(ovl_used + OVL_SRC_CON);
+	wr32(ovl_used + OVL_SRC_CON, src & 1u);
 	wr32(DISP_MUTEX_EN, 1);
 	wr32(DISP_MUTEX_RUN, 1);
 	out(", SRC_CON ");
 	out_hex(src);
 	out(" -> ");
-	out_hex(rd32(OVL0_BASE + OVL_SRC_CON));
+	out_hex(rd32(ovl_used + OVL_SRC_CON));
 	out("\n");
 }
 

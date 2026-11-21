@@ -30,7 +30,7 @@ The request is the last 4 KiB (`0xdf000..0xdffff`).
 | Check | Evidence |
 |---|---|
 | mtkloader port | `mtkloader/mtkloader-begonia.bin` **44,984 B**, from the common `mtk` sources with `-DBEGONIA -DXNU_ROOT_EMMC=0` |
-| Framebuffer | real begonia `mblock-15-framebuffer`: `0x9b7d0000`, 1080x2340, pitch 4320 (from the Linux DT/fb0) |
+| Framebuffer | real begonia `mblock-15-framebuffer`: `0x7d9b0000`, 1080x2340, pitch 4320 (from the Linux DT/fb0) |
 | XNU window | `0xc0000000` + `0x94000000` (5.3 GiB usable bound), boot_args `dram-base`/`dram-size` |
 | Storage | system image `xnusys` read through **MSDC1** (microSD), GPT lookup; touch/TCM disabled (Novatek NT36672A, vendor firmware not in git) |
 | Request | mtkloader reads/clears `DARWIN-BEGONIA:BOOT-XNU` from the raw pmsg tail (`0xdf000`), the same path M1 proved; the ramoops-header path is kept |

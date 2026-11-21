@@ -39,8 +39,8 @@
 #define TOPRGU_SWRST_KEY     0x1209u
 
 /* LK's framebuffer (mblock "framebuffer"), the layer LK shows the logo on. */
-#define LK_FB_BASE           0x9b7d0000ULL
-#define LK_FB_SIZE           0x2502000ULL
+#define LK_FB_BASE           0x7d9b0000ULL
+#define LK_FB_SIZE           0x2250000ULL
 #define LK_FB_PITCH          4320u      /* 1080 pixels * 4 */
 #define PANEL_W              1080u
 #define PANEL_H              2340u
@@ -48,7 +48,7 @@
 #define DISP_MUTEX_EN        0x14001020ULL
 #define DISP_MUTEX_RUN       0x14001024ULL
 
-#define OVL0_BASE            0x1400b000ULL
+#define OVL0_BASE            0x14008000ULL      /* begonia ovl0 (aliases) */
 #define OVL_SRC_CON          0x02c      /* a bit per layer the hardware composes */
 #define OVL_L0_CON           0x030
 #define OVL_L0_PITCH         0x044

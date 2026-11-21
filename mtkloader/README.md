@@ -12,7 +12,7 @@ begonia changes in this repository:
 
 | Constant | MT6768 reference | begonia (MT6785) |
 |---|---|---|
-| Framebuffer | `0x787b0000`, pitch 2944 | `0x9b7d0000`, pitch 4320 (`mblock-15-framebuffer`) |
+| Framebuffer | `0x787b0000`, pitch 2944 | `0x7d9b0000`, pitch 4320 (`mblock-15-framebuffer`) |
 | Panel | 720x1640 | 1080x2340 |
 | XNU window | `0xc0000000` + `0xfe000000` | `0xc0000000` + `0x94000000` (5.3 GiB usable) |
 | System image | eMMC (`xnusys`) | microSD **MSDC1** (`xnusys`), `XNU_ROOT_EMMC=0` |
