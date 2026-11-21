@@ -6,12 +6,13 @@ existing Arch Linux ARM + Phosh installation**.
 
 [![ci](https://github.com/criollojoel10/hakios-begonia/actions/workflows/ci.yml/badge.svg)](https://github.com/criollojoel10/hakios-begonia/actions/workflows/ci.yml)
 
-> **Status: M1 scaffold.** The `mtkchain-begonia` loader builds and is packed
-> in front of the current Linux boot image; the ramoops log/request path and
-> the Linux helper module exist. **Nothing has been run on the phone yet.**
-> XNU is **not** started by this repository at M1; the full XNU loader is the
-> next milestone. Measured M1 evidence: [docs/STATUS.md](docs/STATUS.md). Gates:
-> [docs/PLAN.md](docs/PLAN.md); evidence: [docs/FEASIBILITY.md](docs/FEASIBILITY.md).
+> **Status: M2 images built; hardware gate pending.** The M1 `mtkchain` loop
+> and the M2 `mtkloader` port for MT6785 are built and verified in software; the
+> CI builds the reference XNU kernel (8796.121.2) and a Linux + XNU `hello`
+> chain image (39.6 MiB, under the 64 MiB boot partition). **Nothing has run on
+> the phone yet:** `fastboot boot` needs a PC with USB. Evidence:
+> [docs/STATUS.md](docs/STATUS.md); hardware runbook:
+> [docs/RUN-ON-PC.md](docs/RUN-ON-PC.md); gates: [docs/PLAN.md](docs/PLAN.md).
 
 This is a research project, not a ROM. It does not distribute Apple's user
 space, an IPSW, vendor firmware, or any phone image. The Darwin user space, if
@@ -42,9 +43,10 @@ LK (bootloader)
   -> boot.img (64 MiB, Android header v2, currently 33 MiB)
        kernel = gzip( mtkchain-begonia | Linux arm64 Image )
        ramdisk + DTB from the Linux installation
-  -> mtkchain-begonia
+  -> mtkloader-begonia (M2; M1 is the smaller mtkchain)
        default: copy the Linux Image down to 0x40080000, start it
-       requested: log it; M2 starts the XNU payload instead
+       requested: copy the XNU Mach-O, build the tree/boot_args, run it,
+                  save its log into ramoops, warm-reset back to Linux
   -> Linux ARM + Phosh (root on UFS, /dev/sdc46)
 ```
 
@@ -63,6 +65,10 @@ scripts. M2 writes the same log to the microSD for persistence.
 | `tools/build-chain-image.sh` | build `build/begonia-chain.img` from the current Linux boot image |
 | `tools/request-xnu.sh` | write the one-shot request (ramoops pmsg or microSD) and reboot |
 | `tools/capture-boot-log.sh` | read the last loader/XNU log (ramoops or microSD) |
+| `tools/fetch-xnu.sh` | download the CI `hakios-kernel` and the pinned reference `hello` |
+| `tools/build-m2.sh` | loader + Linux-only chain + XNU hello chain, one command |
+| `tools/m2-chain.sh` | pack the boot image + loader + optional `XNUP` payload |
+| `tools/check-sd-gpt.py` | verify the microSD GPT offline or on a loop device |
 | `tools/sd-layout.sh` | guarded microSD layout: request, log, xnusys, data |
 | `linux/hakios_ramoops.c` | expose the reserved ramoops region when pstore console/pmsg are off |
 | `configs/`, `soc/`, `device.conf` | the HakiOS device/SoC contract for MT6785 |
@@ -103,7 +109,25 @@ M1 does **not** start XNU: it is the dual-boot/control/log loop, tested before
 touching the XNU payload. M2 adds the full mtkloader (adapted from
 `hakios-mt6768`) and the MT6785 platform layer.
 
-## M2: microSD and XNU
+## M2: microSD, the XNU payload and the hardware gate
+
+Build both M2 images (fetching the CI kernel and the reference `hello` if they
+are not there):
+
+```bash
+tools/build-m2.sh /home/alarm/boot-work/aboot-tfa2.img
+#  build/begonia-m2-linux.img    Linux only, 34 MB
+#  build/begonia-m2-hello.img    Linux + XNU hello, 39.6 MB
+```
+
+The loader boots Linux unless the one-shot request `DARWIN-BEGONIA:BOOT-XNU`
+is in the ramoops pmsg tail; it runs XNU with `cpus=1`, returns after 30 s and
+has a 45 s watchdog. The framebuffer is the real `0x7d9b0000` / 1080x2340 /
+4320, and the OVL/RDMA block is probed, not guessed (`docs/M3-MT6785.md`).
+
+To run it, follow **[docs/RUN-ON-PC.md](docs/RUN-ON-PC.md)**: `fastboot boot`
+writes nothing, the flashed dual-boot loop needs the verified backup, and
+`boot-current-20261121.img` is the current partition.
 
 `tools/sd-layout.sh` (guarded, destructive) prepares the 32 GiB SD:
 

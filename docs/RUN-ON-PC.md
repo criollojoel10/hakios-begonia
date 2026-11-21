@@ -19,7 +19,7 @@ host with USB. Nothing here writes the phone unless you choose to flash.
 
 | File | Size | SHA-256 |
 |---|---|---|
-| `build/begonia-m2-linux.img` (Linux only) | 34,035,712 | `b19456502fd6d56765ff95aa4e5d4abe36b2a605a70737dc1def9a0ceca982ed` |
+| `build/begonia-m2-linux.img` (Linux only) | 34,035,712 | `6315b494d35c7f306b210f4ad157d31c0e521c19ae286bd033871c383685dd22` |
 | `build/begonia-m2-hello.img` (Linux + XNU hello) | 39,641,088 | `f739ff1e4226e96f93067d6e2526aec901029745fdc4e91e98cd2f15da2e1332` |
 | `xnu/hakios-kernel` (CI, Mach-O arm64) | 15,077,968 | `2cc22c9a581be95737cabbbf80cb9ccc3996d620d0ae33219fe9d8af778bb6fd` |
 | `build/hello` (reference userland) | 16,480 | `db564073effc31e7ab1679a7ffe0631ec22c3030ad347c927028f3e53c8583c3` |
