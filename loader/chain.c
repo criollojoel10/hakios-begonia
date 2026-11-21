@@ -20,10 +20,15 @@
 #include <stdint.h>
 
 #define RAMOOPS_BASE        0x4d010000ULL
-#define RAMOOPS_CONSOLE     (RAMOOPS_BASE + 0x8f000ULL)
-#define RAMOOPS_CONSOLE_SIZE 0x40000u
 #define RAMOOPS_PMSG        (RAMOOPS_BASE + 0xd0000ULL)
 #define RAMOOPS_PMSG_SIZE   0x10000u
+/* The kernel's pstore console owns the console zone (0x8f000).  The pmsg
+ * backend is off, so its 64 KiB are free: 60 KiB for the loader log and the
+ * last 4 KiB for the one-shot request. */
+#define RAMOOPS_LOG_BASE    RAMOOPS_PMSG
+#define RAMOOPS_LOG_SIZE    0xf000u
+#define RAMOOPS_REQ_BASE    (RAMOOPS_PMSG + 0xf000ULL)
+#define RAMOOPS_REQ_SIZE    0x1000u
 #define RAMOOPS_SIG         0x43474244u /* "DBGC" */
 
 #define CHAIN_OFFSET        0x40000ULL
@@ -61,7 +66,7 @@ struct plog_hdr {
 
 static void plog_reset(void)
 {
-	volatile struct plog_hdr *h = (volatile struct plog_hdr *)RAMOOPS_CONSOLE;
+	volatile struct plog_hdr *h = (volatile struct plog_hdr *)RAMOOPS_LOG_BASE;
 
 	h->sig = RAMOOPS_SIG;
 	h->start = 0;
@@ -70,19 +75,19 @@ static void plog_reset(void)
 
 static void plog_putc(char c)
 {
-	volatile struct plog_hdr *h = (volatile struct plog_hdr *)RAMOOPS_CONSOLE;
-	volatile char *d = (volatile char *)(RAMOOPS_CONSOLE + sizeof(*h));
+	volatile struct plog_hdr *h = (volatile struct plog_hdr *)RAMOOPS_LOG_BASE;
+	volatile char *d = (volatile char *)(RAMOOPS_LOG_BASE + sizeof(*h));
 	uint32_t at = h->start, size = h->size;
 
-	if (h->sig != RAMOOPS_SIG || at >= RAMOOPS_CONSOLE_SIZE - sizeof(*h) ||
-	    size > RAMOOPS_CONSOLE_SIZE - sizeof(*h)) {
+	if (h->sig != RAMOOPS_SIG || at >= RAMOOPS_LOG_SIZE - sizeof(*h) ||
+	    size > RAMOOPS_LOG_SIZE - sizeof(*h)) {
 		plog_reset();
 		at = size = 0;
 	}
 	d[at] = c;
-	if (++at == RAMOOPS_CONSOLE_SIZE - sizeof(*h))
+	if (++at == RAMOOPS_LOG_SIZE - sizeof(*h))
 		at = 0;
-	if (size < RAMOOPS_CONSOLE_SIZE - sizeof(*h))
+	if (size < RAMOOPS_LOG_SIZE - sizeof(*h))
 		size++;
 	h->start = at;
 	h->size = size;
@@ -111,14 +116,14 @@ static void plog_hex(uint64_t v)
 
 static int has_request(void)
 {
-	volatile char *p = (volatile char *)RAMOOPS_PMSG;
+	volatile char *p = (volatile char *)RAMOOPS_REQ_BASE;
 	const char *needle = REQUEST_STRING;
 	uint32_t i;
 
-	for (i = 0; i + 1 < RAMOOPS_PMSG_SIZE; i++) {
+	for (i = 0; i + 1 < RAMOOPS_REQ_SIZE; i++) {
 		uint32_t j = 0;
 
-		while (needle[j] && i + j < RAMOOPS_PMSG_SIZE &&
+		while (needle[j] && i + j < RAMOOPS_REQ_SIZE &&
 		       p[i + j] == needle[j])
 			j++;
 		if (!needle[j])
@@ -129,10 +134,10 @@ static int has_request(void)
 
 static void clear_request(void)
 {
-	volatile uint64_t *p = (volatile uint64_t *)RAMOOPS_PMSG;
+	volatile uint64_t *p = (volatile uint64_t *)RAMOOPS_REQ_BASE;
 	uint32_t i;
 
-	for (i = 0; i < RAMOOPS_PMSG_SIZE; i += 8)
+	for (i = 0; i < RAMOOPS_REQ_SIZE; i += 8)
 		p[i / 8] = 0;
 }
 
@@ -164,7 +169,7 @@ void chain_main(uint64_t dtb)
 
 	plog_reset();
 	plog_puts("mtkchain-begonia M1\n");
-	plog_puts("ramoops console 0x4d09f000 pmsg 0x4d0e0000\n");
+	plog_puts("log pmsg+0x0 request pmsg+0xf000\n");
 
 	req = has_request();
 	plog_puts(req ? "request: XNU\n" : "request: Linux\n");

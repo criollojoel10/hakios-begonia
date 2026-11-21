@@ -27,8 +27,11 @@ ramoops)
     echo "=== ramoops console (strings) ==="
     strings "$ROOT/logs/ramoops-console.bin" | tail -80
     echo
-    echo "=== ramoops pmsg ==="
-    strings "$ROOT/logs/ramoops-pmsg.bin" | tail -20
+    echo "=== ramoops pmsg log (mtkchain) ==="
+    strings "$ROOT/logs/ramoops-pmsg.bin" | tail -40
+    echo
+    echo "=== request area (pmsg+0xf000) ==="
+    sudo dd if="$SRC" bs=1 skip=$((0xdf000)) count=128 status=none | strings
     echo
     echo "saved: $ROOT/logs/ramoops-console.bin, $ROOT/logs/ramoops-pmsg.bin"
     ;;

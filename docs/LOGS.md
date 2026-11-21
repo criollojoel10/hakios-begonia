@@ -23,8 +23,9 @@ ramoops.console_size=0x40000 ramoops.pmsg_size=0x10000
 | offset from `0x4d010000` | size | use |
 |---|---|---|
 | `0x00000` | `0x8f000` | ramoops dump records |
-| `0x8f000` | `0x40000` | console: loader/XNU log |
-| `0xd0000` | `0x10000` | pmsg: request / return |
+| `0x8f000` | `0x40000` | kernel pstore console (`DBGC`; already in use) |
+| `0xd0000` | `0xf000` | mtkchain log (`DBGC` ring) |
+| `0xdf000` | `0x1000` | one-shot request |
 
 The delivered Linux kernel has `CONFIG_PSTORE_CONSOLE` and
 `CONFIG_PSTORE_PMSG` **off**, so `/sys/fs/pstore` is empty and `/dev/pmsg0`
@@ -37,10 +38,13 @@ region. The repo's `linux/hakios_ramoops.ko` maps the reserved region:
   pmsg    at 0xd0000, 0x10000 bytes
 ```
 
-The loader writes a small ring with a `DBGC` header (`sig`, `start`, `size`) at
-the console; `tools/capture-boot-log.sh` reads the whole zone and prints the
-strings. The request is the ASCII string `DARWIN-BEGONIA:BOOT-XNU` at the pmsg;
-the loader scans, logs, and clears it.
+The loader writes a small ring with a `DBGC` header (`sig`, `start`, `size`)
+at the **pmsg log area**. The console (`0x8f000`) is the kernel's pstore
+console and already contains a `DBGC` + "Booting Linux" log; the loader must
+not overwrite it. `CONFIG_PSTORE_PMSG` is off, so the kernel does not touch the
+pmsg and the loader log survives the Linux boot. `tools/capture-boot-log.sh`
+reads the pmsg log and the request area. The request is the ASCII string
+`DARWIN-BEGONIA:BOOT-XNU` at `0xdf000`; the loader scans, logs and clears it.
 
 ## 2. M1 capture
 

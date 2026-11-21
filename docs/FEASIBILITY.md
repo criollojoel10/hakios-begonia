@@ -63,8 +63,9 @@ That is the **same layout** mtkloader uses on MT6768:
 | address | size | use |
 |---|---|---|
 | `0x4d010000` | `0x8f000` | ramoops dump records |
-| `0x4d09f000` | `0x40000` | console (loader/XNU log) |
-| `0x4d0e0000` | `0x10000` | pmsg (one-shot request / return) |
+| `0x4d09f000` | `0x40000` | kernel pstore console (`DBGC`) |
+| `0x4d0e0000` | `0xf000` | mtkchain log (`DBGC` ring) |
+| `0x4d0ef000` | `0x1000` | one-shot request |
 
 The delivered Linux kernel has `CONFIG_PSTORE_CONSOLE` and
 `CONFIG_PSTORE_PMSG` **off** (checked in `/proc/config.gz`), so
@@ -78,9 +79,12 @@ blocks `/dev/mem` reads of the region (`EFAULT`). The repo therefore includes
   0xd0000..0xdffff  pmsg     (request, read/write)
 ```
 
-The loader writes its banner/log to the console and scans the pmsg for
-`DARWIN-BEGONIA:BOOT-XNU`; it clears the request after consuming it. This gives
-the dual-boot control and the log loop **without rebuilding the kernel**. M2
+The loader writes its banner/log to the pmsg log area and scans the last
+4 KiB (`0x4d0ef000`) for `DARWIN-BEGONIA:BOOT-XNU`; it clears the request after
+consuming it. The console (`0x4d09f000`) is the kernel's `DBGC` log, so the
+loader log stays in the pmsg area where the kernel does not write
+(`CONFIG_PSTORE_PMSG` off). This gives the dual-boot control and the log loop
+**without rebuilding the kernel**. M2
 also writes the log to the microSD (`hackios-log`) for persistence across a
 power cycle.
 

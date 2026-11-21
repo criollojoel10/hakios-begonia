@@ -10,8 +10,8 @@ existing Arch Linux ARM + Phosh installation**.
 > in front of the current Linux boot image; the ramoops log/request path and
 > the Linux helper module exist. **Nothing has been run on the phone yet.**
 > XNU is **not** started by this repository at M1; the full XNU loader is the
-> next milestone. Read [docs/PLAN.md](docs/PLAN.md) for the gates and
-> [docs/FEASIBILITY.md](docs/FEASIBILITY.md) for the evidence.
+> next milestone. Measured M1 evidence: [docs/STATUS.md](docs/STATUS.md). Gates:
+> [docs/PLAN.md](docs/PLAN.md); evidence: [docs/FEASIBILITY.md](docs/FEASIBILITY.md).
 
 This is a research project, not a ROM. It does not distribute Apple's user
 space, an IPSW, vendor firmware, or any phone image. The Darwin user space, if
@@ -66,7 +66,7 @@ scripts. M2 writes the same log to the microSD for persistence.
 | `tools/sd-layout.sh` | guarded microSD layout: request, log, xnusys, data |
 | `linux/hakios_ramoops.c` | expose the reserved ramoops region when pstore console/pmsg are off |
 | `configs/`, `soc/`, `device.conf` | the HakiOS device/SoC contract for MT6785 |
-| `docs/` | plan, feasibility, dual boot, logs, hardware, references |
+| `docs/` | plan, feasibility, dual boot, logs, hardware, references, status |
 | `.github/workflows/ci.yml` | builds the loader + a synthetic chain image on every push |
 | `.github/workflows/kernel.yml` | manual XNU kernel build (the heavy gate) |
 
@@ -87,8 +87,8 @@ fastboot boot build/begonia-chain.img
 #   fastboot flash boot build/begonia-chain.img
 ```
 
-The loader logs to ramoops, then boots Linux. To read the log and exercise the
-request path on Linux:
+The loader logs to the ramoops pmsg area, then boots Linux. To read the log
+and exercise the request path on Linux:
 
 ```bash
 cd linux && make KDIR=/home/alarm/kw/src/linux-7.1-r0

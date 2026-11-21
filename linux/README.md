@@ -10,15 +10,18 @@ ramoops.mem_address=0x4d010000 mem_size=0xe0000
 console_size=0x40000 pmsg_size=0x10000
 ```
 
-`mtkchain-begonia` writes its log to `0x4d09f000` (console) and reads the
-one-shot XNU request from `0x4d0e0000` (pmsg). This module maps the whole
+`mtkchain-begonia` writes its log to the pmsg log area (`0x4d0e0000`) and
+reads/writes the one-shot XNU request at `0x4d0ef000`. The console
+(`0x4d09f000`) is the kernel's `DBGC` log; `CONFIG_PSTORE_PMSG` is off, so the
+loader log is not overwritten by the kernel. This module maps the whole
 reserved region as `/dev/hakios-ramoops` (root, 0600):
 
 | offset | size | use |
 |---|---|---|
 | `0x00000` | `0x8f000` | ramoops dump records (unused here) |
-| `0x8f000` | `0x40000` | loader/XNU console log |
-| `0xd0000` | `0x10000` | request/return pmsg |
+| `0x8f000` | `0x40000` | kernel pstore console (`DBGC`; already in use) |
+| `0xd0000` | `0xf000` | mtkchain log (`DBGC` ring) |
+| `0xdf000` | `0x1000` | one-shot request |
 
 The region is reserved RAM; the kernel allocator does not use it, and a warm
 reset keeps it for the next loader session. A full power cycle may lose it.

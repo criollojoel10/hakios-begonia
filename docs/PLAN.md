@@ -47,8 +47,12 @@ Gates:
    `fastboot flash boot boot-backup-7.1.img` (or `dd` if fastboot is not
    available). The Linux root is never touched.
 
-**Current state**: steps 1–2 build/verify locally and in CI; the hardware run
-(2–4) is the next manual step. The loader has not been flashed.
+**Current state** (evidence in [STATUS.md](STATUS.md)): steps 1–2 build and
+verify locally and in CI; the loader/chain/module/request are tested at the
+software level; the hardware run (2–4) is the next manual step. The loader has
+not been flashed. The loader log lives in the pmsg area (`0xd0000..0xdefff`)
+and the request in the last 4 KiB (`0xdf000..0xdffff`), so the kernel's `DBGC`
+console does not overwrite it.
 
 ## M2 — the MediaTek loader, the SD and XNU `hello`
 

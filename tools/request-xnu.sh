@@ -11,8 +11,8 @@ NO_REBOOT=0
 [ "${1:-}" = "--no-reboot" ] && NO_REBOOT=1
 
 if [ -e "$RAMOOPS" ]; then
-    printf '%s' "$REQ" | sudo dd of="$RAMOOPS" bs=1 seek=$((0xd0000)) conv=notrunc status=none
-    echo "request written to $RAMOOPS pmsg (0xd0000)"
+    printf '%s' "$REQ" | sudo dd of="$RAMOOPS" bs=1 seek=$((0xdf000)) conv=notrunc status=none
+    echo "request written to $RAMOOPS pmsg request (0xdf000)"
 elif [ -e "$SD" ]; then
     printf '%s' "$REQ" | sudo dd of="$SD" bs=1 conv=notrunc status=none
     echo "request written to microSD $SD"

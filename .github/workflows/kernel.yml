@@ -1,17 +1,15 @@
 name: kernel
 
-# Heavy XNU build.  This is the M2 gate and the reason for GitHub Actions:
-# the phone cannot reasonably build XNU (time/RAM).  The common `mtk` branch
-# is the MT6768 reference; the MT6785 SoC layer/config is the port this
-# repository is building.  Until that layer lands, this workflow proves the
-# toolchain and produces the reference kernel/logs; do not expect a begonia
-# kernel from it yet.
+# Heavy XNU build (M2 gate).  The phone cannot reasonably build XNU (time/RAM),
+# so this runs on GitHub Actions.  The common `mtk` branch is the MT6768
+# reference; the MT6785 SoC layer/config in this repository is the port.
+# The theos Linux toolchain + iPhoneOS 16.5 SDK are required by xnu-deps.
 on:
   workflow_dispatch:
 
 jobs:
   xnu:
-    name: common mtk branch (reference) + device tree
+    name: common mtk branch (reference) + device
     runs-on: ubuntu-latest
     timeout-minutes: 350
     steps:
@@ -39,9 +37,11 @@ jobs:
           sudo apt-get install -y -qq build-essential ccache cmake ninja-build \
             python3 python3-yaml libssl-dev lld clang llvm device-tree-compiler \
             libgnutls28-dev uuid-dev pkg-config libyaml-dev flex bison m4 \
-            autoconf automake libtool xz-utils rsync >/dev/null
+            autoconf automake libtool xz-utils rsync curl git perl zip \
+            fakeroot libxml2-dev libtinfo6 libz3-dev >/dev/null
           echo "CCACHE_DIR=$PWD/.ccache" >> "$GITHUB_ENV"
           echo "CCACHE_MAXSIZE=4G" >> "$GITHUB_ENV"
+          echo "THEOS=$HOME/theos" >> "$GITHUB_ENV"
 
       - name: ccache
         uses: actions/cache@v4
@@ -52,25 +52,43 @@ jobs:
             ccache-begonia-mtk-
             ccache-mt6768-
 
-      - name: XNU source + patch
+      - name: theos (cctools + iPhoneOS 16.5 SDK), cached
+        uses: actions/cache@v4
+        with:
+          path: ~/theos
+          key: theos-linux-v1
+
+      - name: theos if the cache missed
+        run: |
+          if [ ! -x "$HOME/theos/toolchain/linux/iphone/bin/ld" ]; then
+            curl -fsSL https://raw.githubusercontent.com/theos/theos/master/bin/install-theos -o /tmp/install-theos
+            sed -i 's/git libxml2 \\/git \\/' /tmp/install-theos
+            bash /tmp/install-theos
+          fi
+          ls "$HOME/theos/toolchain/linux/iphone/bin" | head -n 5
+          ls "$HOME/theos/sdks" | head -n 5
+
+      - name: xnu-deps stage 1 (sources, host tools, SDK)
         working-directory: common
         run: |
-          if [ -x xnu/apply.sh ]; then
-            xnu/apply.sh
-          elif [ -f xnu/apply.sh ]; then
-            bash xnu/apply.sh
-          else
-            echo "no xnu/apply.sh: inspect the mtk branch layout" >&2
-            ls -la xnu xnu-deps
-            exit 1
-          fi
+          mkdir -p logs
+          xnu-deps/setup.sh --stage1 2>&1 | tee logs/xnu-deps-stage1.log
+
+      - name: Apple XNU + redwood patch
+        working-directory: common
+        run: |
+          xnu/apply.sh 2>&1 | tee logs/xnu-apply.log
+
+      - name: xnu-deps stage 2 (static libs against the kernel headers)
+        working-directory: common
+        run: |
+          xnu-deps/setup.sh --stage2 2>&1 | tee logs/xnu-deps-stage2.log
 
       - name: Kernel (common mtk reference)
         working-directory: common
         run: |
-          mkdir -p logs
           ./xnu-build.sh JOBS=4 2>&1 | tee logs/xnu-build.log
-          ls -l hakios-kernel kernel.ver 2>/dev/null | tee logs/artifacts.txt
+          ls -l hakios-kernel kernel.ver 2>/dev/null | tee logs/artifacts.txt || true
 
       - name: Collect
         if: always()
@@ -82,5 +100,6 @@ jobs:
             common/.config
             common/hakios-kernel
             common/kernel.ver
+            common/BUILD/obj/**/mach.*
           if-no-files-found: warn
           retention-days: 30

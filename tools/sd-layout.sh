@@ -22,7 +22,13 @@ done
 [ -b "$DEV" ] || { echo "not a block device: $DEV" >&2; exit 1; }
 NAME="$(basename "$DEV")"
 REM="$(cat "/sys/block/$NAME/removable" 2>/dev/null || echo 0)"
-[ "$REM" = 1 ] || { echo "$DEV is not removable (refusing to repartition it)" >&2; exit 1; }
+MODEL="$(cat "/sys/block/$NAME/device/name" 2>/dev/null || echo unknown)"
+# The phone's SD slot reports removable=0 although the card is an SD32G; accept
+# a card-like model name, but still never touch the device that holds the root.
+if [ "$REM" != 1 ] && ! echo "$MODEL" | grep -qiE 'sd|card|mmc'; then
+    echo "$DEV is not removable (model '$MODEL'; refusing to repartition it)" >&2
+    exit 1
+fi
 ROOT="$(findmnt -n -o SOURCE /)"
 case "$ROOT" in "$DEV"*) echo "$DEV contains the running root" >&2; exit 1 ;; esac
 if findmnt -rn "$DEV" >/dev/null 2>&1; then
@@ -30,7 +36,7 @@ if findmnt -rn "$DEV" >/dev/null 2>&1; then
 fi
 
 cat <<EOF
-Plan for $DEV ($(lsblk -dno SIZE "$DEV")):
+Plan for $DEV ($(lsblk -dno SIZE "$DEV"), model $MODEL, removable=$REM):
   1  hackios-request   1 MiB   raw   (request string at sector 0)
   2  hackios-log      64 MiB   raw   (loader/XNU log)
   3  xnusys            8 GiB   raw   (XNU system image)
