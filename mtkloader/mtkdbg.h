@@ -25,6 +25,9 @@
  * host go out in it (kern.redwood.host_keep) */
 #define RAMOOPS_PMSG         0x4d0e0000ULL
 #define RAMOOPS_PMSG_SIZE    0x10000u
+/* begonia: one-shot boot request, raw, in the last 4 KiB of the pmsg zone. */
+#define BEGONIA_REQ_OFF      0xf000u
+#define BEGONIA_REQ_SIZE     0x1000u
 
 #define TOPRGU_BASE          0x10007000ULL
 #define TOPRGU_MODE          (TOPRGU_BASE + 0x00)

@@ -2975,7 +2975,7 @@ static void touch_hand_back(void)
  * (tools/boot-xnu.sh): ramoops keeps it in its pmsg zone across the reboot, where this finds it
  * and wipes it, so the boot after XNU is Android again.
  */
-static const char boot_xnu_flag[] = "DARWIN-REDWOOD:BOOT-XNU";
+static const char boot_xnu_flag[] = "DARWIN-BEGONIA:BOOT-XNU";
 
 /*
  * Whether Android left `flag` in the pmsg zone before rebooting, and if so wipe it, so it is taken
@@ -2988,8 +2988,28 @@ static int pmsg_take(const char *flag, uint32_t n)
 	uint32_t cap = RAMOOPS_PMSG_SIZE - sizeof(struct ramoops_hdr);
 	int found = 0;
 
+	/*
+	 * begonia has no pstore pmsg driver (CONFIG_PSTORE_PMSG is off), so the
+	 * one-shot request is the flag written raw to the last 4 KiB of the pmsg
+	 * zone by linux/hakios_ramoops.ko + tools/request-xnu.sh.
+	 */
+	{
+		volatile char *raw = (volatile char *)(RAMOOPS_PMSG + BEGONIA_REQ_OFF);
+		uint32_t k = 0;
+		while (k < n && k < BEGONIA_REQ_SIZE && raw[k] == flag[k]) {
+			k++;
+		}
+		if (k == n) {
+			for (k = 0; k < n; k++) {
+				raw[k] = '-';
+			}
+			dcache_clean_range(RAMOOPS_PMSG + BEGONIA_REQ_OFF, BEGONIA_REQ_SIZE);
+			found = 1;
+		}
+	}
+
 	if (h->sig != RAMOOPS_SIG || h->size > cap) {
-		return 0;
+		return found;
 	}
 	for (uint32_t at = 0; at + n <= cap; at++) {
 		uint32_t k = 0;
@@ -3017,14 +3037,14 @@ static int boot_choice(void)
 	uint64_t screen = fbc.base;
 
 	fbc.base = 0;
-	dbg_puts(xnu ? "boot: Darwin / XNU (requested)\n" : "boot: Android\n");
+	dbg_puts(xnu ? "boot: Darwin / XNU (requested)\n" : "boot: Linux (mtkchain)\n");
 	fbc.base = screen;
 	fb_rect(0, 600, PANEL_W, 160, 0xff000000u);
 	fbc.scale = 3;
 	fbc.x = 48;
 	fbc.y = 640;
 	fbc.fg = xnu ? 0xff40ff40u : 0xffffffffu;
-	for (const char *c = xnu ? "Booting Darwin / XNU" : "Booting Android"; *c; c++) {
+	for (const char *c = xnu ? "Booting Darwin / XNU" : "Booting Linux"; *c; c++) {
 		fbcon_putc(*c);
 	}
 	fbc.scale = 1;

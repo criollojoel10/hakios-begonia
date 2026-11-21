@@ -98,7 +98,12 @@ jobs:
           ./xnu-build.sh -j4 2>&1 | tee logs/xnu-build.log
           # The common tree writes the linked kernel under xnu-src/**/BUILD/obj;
           # copy it to a stable name for the payload tooling and the artifact.
-          K=$(find xnu-src -path '*/BUILD/obj/*' -name 'mach.development.*' -not -name '*.dSYM' -type f | head -1)
+          # The output tree also holds mach.development.*.dSYM, .unstripped,
+          # .yml, .a and .exp; only the linked Mach-O is the kernel.
+          K=
+          while IFS= read -r f; do
+            if file "$f" | grep -q 'Mach-O'; then K=$f; break; fi
+          done < <(find xnu-src -path '*/BUILD/obj/DEVELOPMENT_ARM64_*/*' -maxdepth 8 -type f -name 'mach.development.*' 2>/dev/null)
           echo "kernel=$K" | tee logs/artifacts.txt
           if [ -n "$K" ]; then
             cp "$K" hakios-kernel
@@ -119,6 +124,5 @@ jobs:
             common/.config
             common/hakios-kernel
             common/kernel.ver
-            common/xnu-src/**/BUILD/obj/**/mach.*
           if-no-files-found: warn
           retention-days: 30

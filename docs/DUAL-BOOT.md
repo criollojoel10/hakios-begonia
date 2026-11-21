@@ -65,7 +65,10 @@ M2 replaces the M1 loader with the full mtkloader (adapted from
 - the XNU payload (`XNUP`: kernel + ramdisk + cmdline) after the Linux Image or
   on the SD;
 - the microSD `xnusys` system image and `hackios-log`;
-- the SD `hackios-request` as the request transport (M1 uses ramoops pmsg);
+- the one-shot request stays in the ramoops pmsg area (the same
+  `DARWIN-BEGONIA:BOOT-XNU` at `0xdf000` that M1 proved), because the pmsg
+  survives a warm reboot and needs no SD write; the SD `hackios-request`
+  partition is reserved for a later transport;
 - the return-to-Linux path with XNU's log saved before the chain.
 
 The SD layout (guarded, destructive):

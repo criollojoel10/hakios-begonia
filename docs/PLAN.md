@@ -8,7 +8,7 @@ each gate is testable and reversible.
 |---|---|---|
 | **M0** | repository, device/SoC contract, CI, docs | done: `ci.yml` builds the loader and a synthetic chain image |
 | **M1** | chainloader in front of Linux + ramoops log/request | **in progress**: loader and chain image build; hardware test pending |
-| **M2** | full MediaTek loader, microSD (`xnusys`/`hackios-log`), XNU `hello` payload | planned |
+| **M2** | full MediaTek loader, microSD (`xnusys`/`hackios-log`), XNU `hello` payload | **in progress**: loader ported and built, reference XNU built in CI; payload/hardware pending |
 | **M3** | MT6785 drivers: display, touch, buttons, storage, Wi-Fi/BT, GPU; iOS 16.5 user space (user IPSW) | planned |
 | **M4** | dual-boot menu/automation, persistent logs, release docs | planned |
 
@@ -73,8 +73,16 @@ Work:
 - Build the XNU payload (`xnuloader/mkpayload.py`), pack it after the Linux
   Image in `begonia-chain.img` or put it on the SD; the loader starts it when
   the request is set.
-- **Evidence**: XNU's first lines/`kernel.ver` in the log; `Hello from user
-  space on Darwin!`; the return to Linux; the log on `hackios-log`/ramoops.
+- **Evidence**: XNU's first lines in the log; `Hello from user space on
+  Darwin!`; the return to Linux; the log on `hackios-log`/ramoops.
+
+**Current state**: `mtkloader/mtkloader-begonia.bin` (44,984 B) builds from the
+common `mtk` sources with the begonia constants (fb `0x9b7d0000`, 1080x2340,
+`0xc0000000+0x94000000`, MSDC1, raw pmsg request); `tools/m2-chain.sh` packs
+the Linux boot image + loader + optional `XNUP` payload and checks the 64 MiB
+limit. The `kernel` workflow builds the reference XNU and now uploads
+`hakios-kernel`. The XNU payload/hello and the hardware boot are the open
+items.
 
 ## M3 — MT6785 drivers and the Darwin user space
 
