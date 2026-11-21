@@ -11,21 +11,29 @@
 # loader on hardware before adding XNU).
 set -euo pipefail
 HERE="$(cd "$(dirname "$0")/.." && pwd)"
-BOOT=${1:?usage: m2-chain.sh <linux-boot.img> <xnu-kernel> [ramdisk] [out.img]}
-KERNEL=${2:?}
-RAMDISK=${3:-}
-OUT=${4:-/tmp/begonia-m2-chain.img}
+BOOT=${1:?usage: m2-chain.sh <linux-boot.img> (- | <xnu-kernel> <ramdisk>) [out.img]}
+shift
+KERNEL=
+RAMDISK=
+OUT=/tmp/begonia-m2-chain.img
+if [ "${1:-}" = "-" ]; then
+    shift                      # Linux only: the next argument, if any, is the output
+    [ $# -ge 1 ] && OUT=$1
+else
+    KERNEL=${1:?pass - for a Linux-only chain, or the XNU kernel}
+    shift
+    RAMDISK=${1:?the XNU payload needs a ramdisk too}
+    shift
+    [ $# -ge 1 ] && OUT=$1
+fi
 LOADER=$HERE/mtkloader/mtkloader-begonia.bin
 
 [ -f "$LOADER" ] || "$HERE/mtkloader/build-begonia.sh"
 
-if [ -n "$KERNEL" ] && [ -n "$RAMDISK" ]; then
-    python3 "$HERE/xnuloader/mkpayload.py" -o /tmp/xnu-begonia.payload \
+if [ -n "$KERNEL" ]; then
+    PAYLOAD=${PAYLOAD:-$HERE/build/xnu-begonia.payload}
+    python3 "$HERE/xnuloader/mkpayload.py" -o "$PAYLOAD" \
         kernel="$KERNEL" ramdisk="$RAMDISK" --cmdline=-v
-    PAYLOAD=/tmp/xnu-begonia.payload
-elif [ -n "$KERNEL" ] && [ "$KERNEL" != "-" ]; then
-    echo "m2-chain: pass a ramdisk too (the XNU payload needs kernel + ramdisk)" >&2
-    exit 1
 else
     PAYLOAD=
 fi

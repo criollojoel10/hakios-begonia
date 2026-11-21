@@ -19,6 +19,7 @@ contract, and packs a synthetic Android boot image with `chainboot.py`; the
 | ramoops console | reads the kernel's `DBGC` zone ("Booting Linux on phys…"), proving the mapping |
 | Request | `tools/request-xnu.sh --no-reboot` writes `DARWIN-BEGONIA:BOOT-XNU` at pmsg `0xdf000`; `dd` reads it back; cleared |
 | microSD | `/dev/mmcblk0`, 29 G, model **SD32G**; `tools/sd-layout.sh` dry run: request 1 MiB, log 64 MiB, xnusys 8 GiB, data rest; **not applied** |
+| microSD GPT (offline) | `tools/sd-layout.sh --image ...` + `tools/check-sd-gpt.py`: 4 partitions, contiguous LBAs, names/sizes verified; device mode validated on a loop device; CI step added |
 
 The loader log now lives in the **pmsg log area** (`0xd0000..0xdefff`), not the
 console: the console (`0x8f000`) is the kernel's `DBGC` pstore log, and

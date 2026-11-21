@@ -49,6 +49,12 @@ jobs:
             /tmp/fake-ramdisk /tmp/begonia-m2.img
           python3 tools/check-chain-image.py /tmp/begonia-m2.img 1088
 
+      - name: microSD GPT layout (offline image, no card)
+        run: |
+          truncate -s 256M /tmp/sd.img
+          tools/sd-layout.sh --image /tmp/sd.img --xnusys 64M --yes
+          python3 tools/check-sd-gpt.py /tmp/sd.img --xnusys 64M
+
       - name: Module source is present (built locally against 7.1.0)
         run: |
           test -f linux/hakios_ramoops.c

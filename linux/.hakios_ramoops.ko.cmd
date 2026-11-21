@@ -1,0 +1,1 @@
+savedcmd_hakios_ramoops.ko := ld.lld -r -EL  -maarch64elf -z norelro -z noexecstack --build-id=sha1  -T /home/alarm/kw/src/linux-7.1-r0/scripts/module.lds -o hakios_ramoops.ko hakios_ramoops.o hakios_ramoops.mod.o .module-common.o
