@@ -30,7 +30,7 @@
 /* XNU's view of memory: one contiguous range that nothing else (LK, Android, TEE, ATF, the
  * framebuffer) uses; 0xc0000000-0xfe000000 is free DRAM on this board. */
 #define XNU_PHYS_BASE       0xc0000000ULL
-#define XNU_MEM_SIZE        0x94000000ULL       /* begonia 5.3 GiB usable: 0xc0000000..0x1_54000000 */
+#define XNU_MEM_SIZE        0x94000000ULL       /* 0xc0000000..0x1_54000000 (2.3 GiB); the modem/TEE holes at 0xf9e00000..0xffefffff are inside: M2 hello only */
 /* Where the system image is put, clear of the kernel, as xnuloader does it (RESIDENT_RD_OFFSET). */
 #define SYSTEM_PA           (XNU_PHYS_BASE + 0x08000000ULL)
 #define SYSTEM_PART         "xnusys"
