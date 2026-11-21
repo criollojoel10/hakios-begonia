@@ -1,0 +1,45 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  loader:
+    name: loader + chain image (no phone)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq clang lld python3
+
+      - name: Shell scripts parse
+        run: git ls-files '*.sh' | xargs -r -n1 bash -n
+
+      - name: Python compiles
+        run: git ls-files '*.py' | xargs -r python3 -m py_compile
+
+      - name: Device/SoC contract
+        run: python3 tools/check-device.py
+
+      - name: Build mtkchain M1
+        run: make -C loader
+
+      - name: Synthetic Linux boot image
+        run: python3 tools/make-test-bootimg.py /tmp/linux-boot.img
+
+      - name: Chain loader in front of it
+        run: |
+          python3 tools/chainboot.py /tmp/linux-boot.img \
+            loader/chain.bin /tmp/begonia-chain.img
+          python3 tools/check-chain-image.py /tmp/begonia-chain.img 1088
+
+      - name: Module source is present (built locally against 7.1.0)
+        run: |
+          test -f linux/hakios_ramoops.c
+          test -f linux/Makefile
+          echo "linux/hakios_ramoops.ko is built on the phone with KDIR=/home/alarm/kw/src/linux-7.1-r0"

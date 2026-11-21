@@ -1,0 +1,29 @@
+NOTICE
+
+This project is an independent HakiOS port for the Xiaomi Redmi Note 8 Pro
+(begonia, MediaTek MT6785). It is not affiliated with or endorsed by Apple,
+Xiaomi, MediaTek, or the upstream HakiOS project.
+
+Derived work (MIT):
+- loader/start.S (the arm64 Image header and chain_stub mechanism) and
+  tools/chainboot.py are derived from oosexgang/hakios-mt6768, which is
+  MIT-licensed. Copyright its authors. The ramoops console/pmsg layout
+  (0x4d010000, console 0x4d09f000, pmsg 0x4d0e0000) follows the same
+  mtkloader/Android ramoops convention.
+- The HakiOS common tree (oosexgang/hakios-xnu-kernel, branch mtk), the
+  Qualcomm/laurel reference (criollojoel10/hakios-sm6125) and the Linux
+  device tree are referenced for porting facts; their licences apply to their
+  code.
+
+Kernel module:
+- linux/hakios_ramoops.c is GPL-2.0, as a Linux kernel module.
+
+XNU:
+- No XNU source is included in this M1 scaffold. XNU and XNU-derived patches
+  are Apple Public Source License 2.0 (APSL-2.0); when the XNU kernel work is
+  added it stays under APSL-2.0.
+
+Nothing of Apple's, no iOS user space, no IPSW, no vendor firmware and no
+phone image is distributed here. The operator supplies their own IPSW and
+firmware. Apple's services (activation, Apple ID, iCloud, App Store) are not
+supported and are not a goal.

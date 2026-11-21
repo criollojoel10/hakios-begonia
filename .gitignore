@@ -1,0 +1,15 @@
+build/
+logs/
+fw-*/
+*.o
+*.ko
+*.mod
+*.mod.c
+*.bin
+*.img
+*.pyc
+__pycache__/
+Module.symvers
+modules.order
+.*.cmd
+.DS_Store

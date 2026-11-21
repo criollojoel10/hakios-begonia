@@ -1,0 +1,86 @@
+name: kernel
+
+# Heavy XNU build.  This is the M2 gate and the reason for GitHub Actions:
+# the phone cannot reasonably build XNU (time/RAM).  The common `mtk` branch
+# is the MT6768 reference; the MT6785 SoC layer/config is the port this
+# repository is building.  Until that layer lands, this workflow proves the
+# toolchain and produces the reference kernel/logs; do not expect a begonia
+# kernel from it yet.
+on:
+  workflow_dispatch:
+
+jobs:
+  xnu:
+    name: common mtk branch (reference) + device tree
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: device
+
+      - name: Common tree (HakiOS mtk branch)
+        uses: actions/checkout@v4
+        with:
+          repository: oosexgang/hakios-xnu-kernel
+          ref: mtk
+          path: common
+          fetch-depth: 1
+          submodules: false
+
+      - name: Place the device where the common tooling expects it
+        run: |
+          mkdir -p common/devices/begonia
+          rsync -a --exclude .git device/ common/devices/begonia/
+
+      - name: Dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq build-essential ccache cmake ninja-build \
+            python3 python3-yaml libssl-dev lld clang llvm device-tree-compiler \
+            libgnutls28-dev uuid-dev pkg-config libyaml-dev flex bison m4 \
+            autoconf automake libtool xz-utils rsync >/dev/null
+          echo "CCACHE_DIR=$PWD/.ccache" >> "$GITHUB_ENV"
+          echo "CCACHE_MAXSIZE=4G" >> "$GITHUB_ENV"
+
+      - name: ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ccache-begonia-mtk-${{ github.sha }}
+          restore-keys: |
+            ccache-begonia-mtk-
+            ccache-mt6768-
+
+      - name: XNU source + patch
+        working-directory: common
+        run: |
+          if [ -x xnu/apply.sh ]; then
+            xnu/apply.sh
+          elif [ -f xnu/apply.sh ]; then
+            bash xnu/apply.sh
+          else
+            echo "no xnu/apply.sh: inspect the mtk branch layout" >&2
+            ls -la xnu xnu-deps
+            exit 1
+          fi
+
+      - name: Kernel (common mtk reference)
+        working-directory: common
+        run: |
+          mkdir -p logs
+          ./xnu-build.sh JOBS=4 2>&1 | tee logs/xnu-build.log
+          ls -l hakios-kernel kernel.ver 2>/dev/null | tee logs/artifacts.txt
+
+      - name: Collect
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: begonia-xnu-reference-${{ github.sha }}
+          path: |
+            common/logs/**
+            common/.config
+            common/hakios-kernel
+            common/kernel.ver
+          if-no-files-found: warn
+          retention-days: 30

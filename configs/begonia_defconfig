@@ -1,0 +1,7 @@
+# HakiOS defconfig for the Xiaomi Redmi Note 8 Pro (begonia, MT6785):
+# the common kernel's configuration, the MT6785 SoC layer's facts and this
+# phone's own.  M1 (mtkchain) does not consume this yet; the common `mtk`
+# branch is the XNU kernel reference and the first kernel gate.
+#include common_defconfig
+#include mt6785.config
+#include begonia.config
