@@ -68,6 +68,14 @@ jobs:
           ls "$HOME/theos/toolchain/linux/iphone/bin" | head -n 5
           ls "$HOME/theos/sdks" | head -n 5
 
+      - name: iPhoneOS 16.5 SDK (theos/sdks)
+        run: |
+          if [ ! -d "$HOME/theos/sdks/iPhoneOS16.5.sdk" ]; then
+            git clone --depth 1 https://github.com/theos/sdks /tmp/theos-sdks
+            cp -a /tmp/theos-sdks/iPhoneOS16.5.sdk "$HOME/theos/sdks/"
+          fi
+          test -d "$HOME/theos/sdks/iPhoneOS16.5.sdk/usr/include"
+
       - name: xnu-deps stage 1 (sources, host tools, SDK)
         working-directory: common
         run: |
