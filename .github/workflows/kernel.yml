@@ -103,7 +103,7 @@ jobs:
           K=
           while IFS= read -r f; do
             if file "$f" | grep -q 'Mach-O'; then K=$f; break; fi
-          done < <(find xnu-src -path '*/BUILD/obj/DEVELOPMENT_ARM64_*/*' -maxdepth 8 -type f -name 'mach.development.*' 2>/dev/null)
+          done < <(find xnu-src -maxdepth 8 -type f -path '*/BUILD/obj/DEVELOPMENT_ARM64_*/*' -name 'mach.development.*' 2>/dev/null)
           echo "kernel=$K" | tee logs/artifacts.txt
           if [ -n "$K" ]; then
             cp "$K" hakios-kernel

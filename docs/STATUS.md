@@ -1,4 +1,4 @@
-# Status — 2026-11-21 (M1)
+# Status — 2026-11-21 (M1 hardware gate, M2 build)
 
 **Repository:** <https://github.com/criollojoel10/hakios-begonia> (public)
 
@@ -25,15 +25,30 @@ console: the console (`0x8f000`) is the kernel's `DBGC` pstore log, and
 `CONFIG_PSTORE_PMSG` is off, so the kernel does not overwrite the loader log.
 The request is the last 4 KiB (`0xdf000..0xdffff`).
 
+## M2 build (in progress)
+
+| Check | Evidence |
+|---|---|
+| mtkloader port | `mtkloader/mtkloader-begonia.bin` **44,984 B**, from the common `mtk` sources with `-DBEGONIA -DXNU_ROOT_EMMC=0` |
+| Framebuffer | real begonia `mblock-15-framebuffer`: `0x9b7d0000`, 1080x2340, pitch 4320 (from the Linux DT/fb0) |
+| XNU window | `0xc0000000` + `0x94000000` (5.3 GiB usable bound), boot_args `dram-base`/`dram-size` |
+| Storage | system image `xnusys` read through **MSDC1** (microSD), GPT lookup; touch/TCM disabled (Novatek NT36672A, vendor firmware not in git) |
+| Request | mtkloader reads/clears `DARWIN-BEGONIA:BOOT-XNU` from the raw pmsg tail (`0xdf000`), the same path M1 proved; the ramoops-header path is kept |
+| Linux chain | `/tmp/begonia-m2-nopayload.img` **34,035,712 B**; Image 43,682,304; check OK |
+| XNU reference | `kernel` run **44924952512 success**: theos + `xnu-deps` stage 1/2 + XNU 8796.121.2; kernel linked (`mach.development.bcm2837`) |
+| Payload tooling | `xnuloader/mkpayload.py` + `tools/m2-chain.sh` (Linux boot image + loader + optional `XNUP` kernel/ramdisk; 64 MiB guard) |
+| CI artifact | the first upload grabbed a symbols YAML; the workflow now selects the linked Mach-O and uploads only `hakios-kernel` (fix `5c…`) |
+
 ## Not done yet
 
 - The chain image has **not** been flashed or `fastboot boot`ed on hardware;
   the M1 hardware gate is the next manual step.
-- No XNU payload is started; the M1 request is a logged dry run.
+- No XNU payload has run on the phone; the M2 payload is built and packed but
+  the hardware boot is blocked on a host with USB.
 - No MT6785 XNU drivers (display/touch/GPU/storage/Wi-Fi/BT) and no iOS user
   space (the operator supplies their own IPSW).
-- The `kernel` workflow (theos + `xnu-deps/setup.sh` + common `mtk` branch) is
-  present but not yet run to completion; it is the M2 reference gate.
+- The reference kernel is the common `mtk` build (MT6768 drivers, arm64
+  `BCM2837` machine config); the MT6785 device layer is the M3 port.
 
 ## Next
 
@@ -41,6 +56,9 @@ The request is the last 4 KiB (`0xdf000..0xdffff`).
    write), or flash after a verified `boot` backup; verify Linux still boots.
 2. `tools/capture-boot-log.sh ramoops` shows the M1 banner and the request
    state; `tools/request-xnu.sh` + reboot proves the request loop.
-3. Trigger the `kernel` workflow; collect the reference build logs.
-4. M2: the full mtkloader adapted to MT6785, the microSD `xnusys`/`hackios-log`,
-   and the XNU `hello` payload.
+3. Build the `hello` payload from the CI kernel and pack
+   `tools/m2-chain.sh ... hello`; keep the result under 64 MiB.
+4. From a host with USB, `fastboot boot` the M2 chain (`/tmp/begonia-m2-chain.img`)
+   and verify: Linux default, request -> XNU hello -> return to Linux.
+5. M3: the MT6785 device layer; move each `device.conf` status to `works` only
+   after seeing it on the phone.
