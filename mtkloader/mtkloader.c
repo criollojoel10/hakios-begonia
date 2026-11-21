@@ -413,31 +413,51 @@ static uint32_t fb_pitch;
  * falls inside the reserved framebuffer. Probe them instead of guessing.
  */
 static uint64_t ovl_used;
+static uint64_t rdma_used;
+static int layer_in_fb(uint32_t addr, uint32_t pitch)
+{
+	/* begonia: 1080 * 4 = 4320, wider than the MT6768's 2944. */
+	return addr >= LK_FB_BASE && addr < LK_FB_BASE + LK_FB_SIZE &&
+	       pitch >= PANEL_W * 4 && pitch <= 8192;
+}
 static void display_find(void)
 {
-	static const uint64_t cand[] = {
+	static const uint64_t ovl[] = {
 		0x14008000ULL, 0x14009000ULL, 0x1400a000ULL, 0x1400b000ULL, 0x1400c000ULL,
 	};
+	static const uint64_t rdma[] = { 0x1400b000ULL, 0x1400c000ULL };
 
 	fb_base = LK_FB_BASE;
 	fb_pitch = LK_FB_PITCH;
 	ovl_used = 0;
-	for (unsigned i = 0; i < sizeof(cand) / sizeof(cand[0]); i++) {
-		uint32_t addr = rd32(cand[i] + OVL_L0_ADDR);
-		uint32_t pitch = rd32(cand[i] + OVL_L0_PITCH) & 0xffff;
+	rdma_used = 0;
+	for (unsigned i = 0; i < sizeof(ovl) / sizeof(ovl[0]); i++) {
+		uint32_t addr = rd32(ovl[i] + OVL_L0_ADDR);
+		uint32_t pitch = rd32(ovl[i] + OVL_L0_PITCH) & 0xffff;
 
-		/* begonia: 1080 * 4 = 4320, wider than the MT6768's 2944. */
-		if (addr >= LK_FB_BASE && addr < LK_FB_BASE + LK_FB_SIZE &&
-		    pitch >= PANEL_W * 4 && pitch <= 8192) {
+		if (layer_in_fb(addr, pitch)) {
 			fb_base = addr;
 			fb_pitch = pitch;
-			ovl_used = cand[i];
-			break;
+			ovl_used = ovl[i];
+			return;
 		}
 	}
-	if (!ovl_used) {
-		out("OVL: no layer inside the framebuffer; left alone\n");
+	/* LK may feed the panel straight from RDMA (start address 0x0f00). */
+	for (unsigned i = 0; i < sizeof(rdma) / sizeof(rdma[0]); i++) {
+		uint32_t addr = rd32(rdma[i] + 0x0f00);
+		uint32_t pitch = rd32(rdma[i] + 0x002c) & 0xffff;
+
+		if (layer_in_fb(addr, pitch)) {
+			fb_base = addr;
+			fb_pitch = pitch;
+			rdma_used = rdma[i];
+			out("display: RDMA ");
+			out_hex(rdma_used);
+			out(" scans the framebuffer\n");
+			return;
+		}
 	}
+	out("display: no OVL/RDMA layer inside the framebuffer; left alone\n");
 }
 
 /* Opaque pixels only from here on: XNU's console writes alpha 0. */
