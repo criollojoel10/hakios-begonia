@@ -31,6 +31,7 @@ LOADER=$HERE/mtkloader/mtkloader-begonia.bin
 [ -f "$LOADER" ] || "$HERE/mtkloader/build-begonia.sh"
 
 if [ -n "$KERNEL" ]; then
+    mkdir -p "$HERE/build"
     PAYLOAD=${PAYLOAD:-$HERE/build/xnu-begonia.payload}
     python3 "$HERE/xnuloader/mkpayload.py" -o "$PAYLOAD" \
         kernel="$KERNEL" ramdisk="$RAMDISK" --cmdline=-v
