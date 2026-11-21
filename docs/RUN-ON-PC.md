@@ -19,8 +19,8 @@ host with USB. Nothing here writes the phone unless you choose to flash.
 
 | File | Size | SHA-256 |
 |---|---|---|
-| `build/begonia-m2-linux.img` (Linux only) | 34,035,712 | `6315b494d35c7f306b210f4ad157d31c0e521c19ae286bd033871c383685dd22` |
-| `build/begonia-m2-hello.img` (Linux + XNU hello) | 39,641,088 | `f739ff1e4226e96f93067d6e2526aec901029745fdc4e91e98cd2f15da2e1332` |
+| `build/begonia-m2-linux.img` (Linux only) | 34,035,712 | `3a9569b42d68c0951faac614d0ee2e9c8b33c7abc01a67d8a6a0c7113e3c6ca3` |
+| `build/begonia-m2-hello.img` (Linux + XNU hello) | 39,641,088 | `2d8ba5a13277445ebe173130456799a90d386b505920a8e7b8cc83956d0c3fea` |
 | `xnu/hakios-kernel` (CI, Mach-O arm64) | 15,077,968 | `2cc22c9a581be95737cabbbf80cb9ccc3996d620d0ae33219fe9d8af778bb6fd` |
 | `build/hello` (reference userland) | 16,480 | `db564073effc31e7ab1679a7ffe0631ec22c3030ad347c927028f3e53c8583c3` |
 | `boot-current-20261121.img` (64 MiB) | 67,108,864 | `c3804bb264357a3a06cc6897c37808d9627eeba0d90bae1cd305f249d0e58992` |

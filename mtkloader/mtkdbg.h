@@ -45,8 +45,9 @@
 #define PANEL_W              1080u
 #define PANEL_H              2340u
 
-#define DISP_MUTEX_EN        0x14001020ULL
-#define DISP_MUTEX_RUN       0x14001024ULL
+/* begonia has its mutex at 0x14016000 with the MT8192 register layout;
+ * the MT6768 addresses below are NOT it, so the loader leaves the mutex
+ * alone until it is probed on hardware (docs/M3-MT6785.md). */
 
 #define OVL0_BASE            0x14008000ULL      /* begonia ovl0 (aliases) */
 #define OVL_SRC_CON          0x02c      /* a bit per layer the hardware composes */

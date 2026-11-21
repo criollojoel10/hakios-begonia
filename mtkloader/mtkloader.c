@@ -481,8 +481,8 @@ static void display_alpha_off(void)
 	 */
 	uint32_t src = rd32(ovl_used + OVL_SRC_CON);
 	wr32(ovl_used + OVL_SRC_CON, src & 1u);
-	wr32(DISP_MUTEX_EN, 1);
-	wr32(DISP_MUTEX_RUN, 1);
+	/* No mutex write: begonia's mutex (0x14016000) is not the MT6768 one. The
+	 * next frame applies the OVL change; M3 probes the mutex before using it. */
 	out(", SRC_CON ");
 	out_hex(src);
 	out(" -> ");
