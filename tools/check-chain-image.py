@@ -23,8 +23,27 @@ def main(path, expected=None):
         "Linux Image is not at CHAIN_OFFSET"
     if expected is not None:
         assert res2 == int(expected), f"res2 {res2} != {expected}"
+    payload = ""
+    if res3:
+        assert res3 % 16 == 0, f"payload offset {res3} is not 16-aligned"
+        assert res3 + 8 <= len(img), "payload offset is past the decompressed kernel"
+        magic, size = struct.unpack_from("<II", img, res3)
+        assert magic == 0x50554E58, f"no XNUP payload at {res3:#x} (magic {magic:#x})"
+        assert res3 + 8 + size <= len(img), "payload size runs past the decompressed kernel"
+        names = []
+        at = res3 + 8
+        while at + 24 <= res3 + 8 + size:
+            name, n, _ = struct.unpack_from("<16sII", img, at)
+            name = name.rstrip(b"\0").decode(errors="replace")
+            if not name:
+                break
+            names.append(f"{name}={n}")
+            at += 24 + ((n + 15) // 16) * 16
+        assert "kernel=" in " ".join(names), "payload has no kernel entry"
+        assert "ramdisk=" in " ".join(names), "payload has no ramdisk entry"
+        payload = f"; payload {size} bytes ({', '.join(names)})"
     print(f"{path}: {len(d)} bytes; kernel {ksize}; Linux Image {res2}; "
-          f"payload offset {res3}")
+          f"payload offset {res3}{payload}")
     print("OK")
     return 0
 
