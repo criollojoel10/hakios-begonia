@@ -30,7 +30,7 @@ The request is the last 4 KiB (`0xdf000..0xdffff`).
 
 | Check | Evidence |
 |---|---|
-| mtkloader port | `mtkloader/mtkloader-begonia.bin` **44,984 B**, from the common `mtk` sources with `-DBEGONIA -DXNU_ROOT_EMMC=0` |
+| mtkloader port | `mtkloader/mtkloader-begonia.bin` **45,464 B**, from the common `mtk` sources with `-DBEGONIA -DXNU_ROOT_EMMC=0 -DXNU_CORES=1 -DXNU_RETURN_AFTER=\"30\" -DXNU_WATCH_SECONDS=45` |
 | Framebuffer | real begonia `mblock-15-framebuffer`: `0x7d9b0000`, 1080x2340, pitch 4320 (from the Linux DT/fb0) |
 | XNU window | `0xc0000000` + `0x94000000` (5.3 GiB usable bound), boot_args `dram-base`/`dram-size` |
 | Storage | system image `xnusys` read through **MSDC1** (microSD), GPT lookup; touch/TCM disabled (Novatek NT36672A, vendor firmware not in git) |
@@ -38,7 +38,8 @@ The request is the last 4 KiB (`0xdf000..0xdffff`).
 | Linux chain | `/tmp/begonia-m2-nopayload.img` **34,035,712 B**; Image 43,682,304; check OK |
 | XNU reference | `kernel` runs **44924952512** and **44926233119 success**: theos + `xnu-deps` stage 1/2 + XNU 8796.121.2; artifact `hakios-kernel` is the linked Mach-O (15,077,968 B) |
 | Payload tooling | `xnuloader/mkpayload.py` + `tools/m2-chain.sh` (Linux boot image + loader + optional `XNUP` kernel/ramdisk; 64 MiB guard) |
-| M2 chain | `/tmp/begonia-m2-hello.img` **39,639,040 B**: Linux Image 43,682,304; XNUP payload 15,094,560 (kernel 15,077,968 + hello 16,480 + cmdline); res3 43,944,448; check OK |
+| M2 chain | `build/begonia-m2-hello.img` **39,641,088 B**: Linux Image 43,682,304; XNUP payload 15,094,560 (kernel 15,077,968 + hello 16,480 + cmdline); res3 43,944,448; check OK |
+| Boot backup | `boot-current-20261121.img` 64 MiB SHA-256 `c3804bb…` (the current partition); the older `boot-backup-7.1.img` is `17b3472…` — see [RUN-ON-PC.md](RUN-ON-PC.md) |
 | CI artifact | the first upload grabbed a symbols YAML; the fixed workflow selects the linked Mach-O and uploads only `hakios-kernel` (verified on run 44926233119) |
 
 ## Not done yet
