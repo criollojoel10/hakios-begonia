@@ -42,6 +42,18 @@ The request is the last 4 KiB (`0xdf000..0xdffff`).
 | Boot backup | `boot-current-20261121.img` 64 MiB SHA-256 `c3804bb…` (the current partition); the older `boot-backup-7.1.img` is `17b3472…` — see [RUN-ON-PC.md](RUN-ON-PC.md) |
 | CI artifact | the first upload grabbed a symbols YAML; the fixed workflow selects the linked Mach-O and uploads only `hakios-kernel` (verified on run 44926233119) |
 
+## Linux daily-use tuning (2026-11-23)
+
+| Item | Value |
+|---|---|
+| CPU | `performance`, 2.00 / 2.05 GHz (max) |
+| GPU | Mali-G76 900 MHz, `userspace` (max) |
+| Backlight | **1879/1879**; `idle-dim` and ambient auto-brightness off |
+| Charge | input **2.0 A** (source max), battery **3.2 A**, CV unchanged 4.35 V |
+| Services | `begonia-performance`, `begonia-charge-boost.timer`, `begonia-brightness` — enabled/active |
+| Current source | Type-C `current_max=2.0 A`; at max load the net battery charge is small; a DCP/PD charger is used to the source limit |
+| Evidence | `begonia-charge-boost.sh --status`, sysfs readback; see [BEGONIA-POWER.md](BEGONIA-POWER.md) |
+
 ## Not done yet
 
 - The chain image has **not** been flashed or `fastboot boot`ed on hardware;

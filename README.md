@@ -72,6 +72,8 @@ scripts. M2 writes the same log to the microSD for persistence.
 | `tools/sd-layout.sh` | guarded microSD layout: request, log, xnusys, data |
 | `linux/hakios_ramoops.c` | expose the reserved ramoops region when pstore console/pmsg are off |
 | `configs/`, `soc/`, `device.conf` | the HakiOS device/SoC contract for MT6785 |
+| `config/begonia/` | Linux daily-use tuning: performance, backlight max, charge limits |
+| `docs/BEGONIA-POWER.md` | measured values, install, risks and rollback for that tuning |
 | `docs/` | plan, feasibility, dual boot, logs, hardware, references, status |
 | `.github/workflows/ci.yml` | builds the loader + a synthetic chain image on every push |
 | `.github/workflows/kernel.yml` | manual XNU kernel build (the heavy gate) |

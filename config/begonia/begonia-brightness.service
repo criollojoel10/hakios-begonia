@@ -1,0 +1,13 @@
+[Unit]
+Description=begonia backlight at hardware maximum
+After=graphical.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStartPre=/bin/sleep 5
+ExecStart=/usr/local/bin/begonia-brightness-max.sh
+
+[Install]
+WantedBy=graphical.target

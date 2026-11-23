@@ -1,0 +1,10 @@
+[Unit]
+Description=Raise begonia MT6360 charge limits
+After=multi-user.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/begonia-charge-boost.sh
+
+[Install]
+WantedBy=multi-user.target
