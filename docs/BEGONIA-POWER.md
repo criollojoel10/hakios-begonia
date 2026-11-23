@@ -29,12 +29,20 @@ battery's 4.35 V: it is **not** raised, and `constant_charge_voltage_max`
 ## The current source is the real limit
 
 The attached Type-C source reports `current_max = 2.0 A` (5 V, ~10 W) and the
-MT6360 still presents itself as SDP in `usb_type`. With the CPU and GPU at the
-top and the backlight at 1879, the phone's own load is several watts, so the
-**net** battery current is small (tens of mA) even while `status` says
-`Charging`. With a dedicated DCP/PD charger the script raises the input limit
-to `min(source current_max, 3.25 A)`, so an 18 W (9 V/2 A) or 3 A source is used
-fully.
+MT6360 still presents itself as SDP in `usb_type`. The MT6360 ADC is the honest
+view (2026-11-23):
+
+```text
+ibus = 777 mA, vbus = 4495 mV, ibat = 52 mA
+```
+
+The input voltage is at the charger's **VINDPM** floor (`input_voltage_limit`
+4.5 V): the source/cable cannot hold 5 V at 2 A, so the charger regulates the
+input down and the battery gets only tens of mA while the phone runs at max
+brightness/performance. This is a **source/cable** limit, not a software one.
+With a dedicated DCP/PD charger the script raises the input limit to
+`min(source current_max, 3.25 A)`, so an 18 W (9 V/2 A) or 3 A source is used
+fully. A short, good cable matters as much as the charger.
 
 `begonia-charge-boost.timer` re-reads the source every 30 s, so plugging a
 better charger in is picked up without a reboot. It only writes when a value
@@ -83,6 +91,10 @@ for p in /sys/devices/system/cpu/cpufreq/policy*; do
 done
 cat /sys/class/devfreq/13040000.gpu/{cur_freq,max_freq,governor}
 cat /sys/class/power_supply/battery/{status,capacity,voltage_now,current_now}
+# the real input side (MT6360 ADC):
+for d in /sys/bus/iio/devices/iio:device*; do
+  case "$(cat $d/name)" in mt6360-adc*) echo $d;; esac
+done
 ```
 
 Expected: `performance` and the top frequency, GPU 900 MHz, backlight
